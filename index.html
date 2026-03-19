@@ -874,6 +874,72 @@
             will-change: opacity, transform;
             pointer-events: none;
         }
+
+        /* ============================================
+           SECTION 6: Sound Spectrum — Audio Visualizer
+           ============================================ */
+        #sound-spectrum {
+            position: relative;
+            padding: 6rem 0 8rem;
+            min-height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        .sound-canvas-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #040407;
+        }
+
+        .sound-canvas-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sound-controls {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 1.4rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sound-controls label {
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sound-controls input[type="range"] {
+            width: 100px;
+            accent-color: var(--glow-cyan);
+            height: 4px;
+        }
+
+        .sound-description {
+            max-width: 600px;
+            margin: 2.5rem auto 0;
+            text-align: center;
+        }
+
+        .sound-description p {
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
@@ -1056,6 +1122,43 @@
 
             <!-- Infinity symbol -->
             <div class="depth-infinity" id="depth-infinity">∞</div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 6: Sound Spectrum — Audio Visualizer
+         ============================================ -->
+    <section id="sound-spectrum">
+        <div class="section-container">
+            <header class="section-header" data-scroll-reveal>
+                <h2 class="section-number">05 — SOUND SPECTRUM</h2>
+                <div class="section-line"></div>
+            </header>
+
+            <div class="sound-canvas-wrap">
+                <canvas id="sound-canvas"></canvas>
+            </div>
+
+            <div class="sound-controls">
+                <button class="flow-btn" id="snd-mic">&#9654; Start Microphone</button>
+                <button class="flow-btn" id="snd-demo">&#9835; Demo Mode</button>
+                <div class="flow-sep"></div>
+                <label>Sensitivity <input type="range" id="snd-sens" min="0.5" max="3" step="0.1" value="1.2"></label>
+                <div class="flow-sep"></div>
+                <button class="flow-btn active" data-viz="bars">Bars</button>
+                <button class="flow-btn" data-viz="wave">Wave</button>
+                <button class="flow-btn" data-viz="mirror">Mirror</button>
+            </div>
+
+            <div class="sound-description">
+                <p>Real-time audio visualization using the Web Audio API. Frequency data from a microphone or synthesized oscillator is mapped to a circular display — low frequencies at the core, highs at the edges, creating a living spectrum of sound made visible.</p>
+                <div style="margin-top:1rem;text-align:center">
+                    <span class="tech-tag">Web Audio API</span>
+                    <span class="tech-tag">AnalyserNode</span>
+                    <span class="tech-tag">Canvas 2D</span>
+                    <span class="tech-tag">OscillatorNode</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -2062,6 +2165,309 @@
         window.addEventListener('scroll', onScroll, { passive: true });
         // Initial call
         onScroll();
+    })();
+
+    /* ============================================
+       SECTION 6: Sound Spectrum — Audio Visualizer
+       ============================================ */
+    (function initSoundSpectrum() {
+        const cvs = document.getElementById('sound-canvas');
+        if (!cvs) return;
+        const ctx = cvs.getContext('2d');
+        const wrap = cvs.parentElement;
+
+        // Canvas sizing
+        let W, H, cx, cy, dpr;
+        function resize() {
+            const rect = wrap.getBoundingClientRect();
+            dpr = Math.min(window.devicePixelRatio, 2);
+            W = rect.width;
+            H = rect.height;
+            cvs.width = W * dpr;
+            cvs.height = H * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            cx = W / 2;
+            cy = H / 2;
+        }
+        resize();
+        window.addEventListener('resize', resize, { passive: true });
+
+        // Audio state
+        let audioCtx = null;
+        let analyser = null;
+        let dataArray = null;
+        let smoothed = new Float32Array(128);
+        let source = null;
+        let demoOsc = null;
+        let demoGain = null;
+        let demoActive = false;
+        let micActive = false;
+        let sensitivity = 1.2;
+        let vizMode = 'bars';
+        let sndVisible = false;
+        let rotAngle = 0;
+
+        const BAR_COUNT = 128;
+
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.75;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            smoothed = new Float32Array(analyser.frequencyBinCount);
+        }
+
+        // --- Microphone ---
+        document.getElementById('snd-mic').addEventListener('click', async function() {
+            initAudio();
+            if (micActive) {
+                if (source) { source.disconnect(); source = null; }
+                micActive = false;
+                this.textContent = '\u25B6 Start Microphone';
+                this.classList.remove('active');
+                return;
+            }
+            // Stop demo if running
+            stopDemo();
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                source = audioCtx.createMediaStreamSource(stream);
+                source.connect(analyser);
+                micActive = true;
+                this.textContent = '\u25A0 Stop Microphone';
+                this.classList.add('active');
+            } catch(e) {
+                this.textContent = 'Mic Denied';
+            }
+        });
+
+        // --- Demo Mode ---
+        function stopDemo() {
+            if (demoOsc) {
+                demoOsc.stop();
+                demoOsc.disconnect();
+                demoOsc = null;
+            }
+            if (demoGain) { demoGain.disconnect(); demoGain = null; }
+            demoActive = false;
+            const btn = document.getElementById('snd-demo');
+            btn.textContent = '\u266B Demo Mode';
+            btn.classList.remove('active');
+        }
+
+        document.getElementById('snd-demo').addEventListener('click', function() {
+            initAudio();
+            if (demoActive) { stopDemo(); return; }
+            // Stop mic
+            if (source) { source.disconnect(); source = null; micActive = false; }
+            const micBtn = document.getElementById('snd-mic');
+            micBtn.textContent = '\u25B6 Start Microphone';
+            micBtn.classList.remove('active');
+
+            demoGain = audioCtx.createGain();
+            demoGain.gain.value = 0.3;
+            demoGain.connect(analyser);
+
+            function startOsc() {
+                if (!demoActive) return;
+                demoOsc = audioCtx.createOscillator();
+                demoOsc.type = 'sine';
+                demoOsc.connect(demoGain);
+
+                const now = audioCtx.currentTime;
+                // Sweep low to high
+                demoOsc.frequency.setValueAtTime(80, now);
+                demoOsc.frequency.exponentialRampToValueAtTime(2000, now + 3);
+                demoOsc.frequency.exponentialRampToValueAtTime(100, now + 6);
+                // Rhythmic pulses
+                for (let i = 0; i < 8; i++) {
+                    const t = now + 6.5 + i * 0.4;
+                    demoOsc.frequency.setValueAtTime(150 + (i % 3) * 200, t);
+                }
+                demoOsc.start(now);
+                demoOsc.stop(now + 10);
+                demoOsc.onended = function() {
+                    if (demoActive) startOsc();
+                };
+            }
+
+            demoActive = true;
+            this.textContent = '\u25A0 Stop Demo';
+            this.classList.add('active');
+            startOsc();
+        });
+
+        // --- Sensitivity slider ---
+        document.getElementById('snd-sens').addEventListener('input', function() {
+            sensitivity = parseFloat(this.value);
+        });
+
+        // --- Viz mode buttons ---
+        document.querySelectorAll('[data-viz]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('[data-viz]').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                vizMode = this.dataset.viz;
+            });
+        });
+
+        // --- Color gradient for bars ---
+        function barColor(i, total) {
+            const t = i / total;
+            const r = Math.floor(t * 255 + (1 - t) * 0);
+            const g = Math.floor((1 - t) * 240 + t * 45);
+            const b = Math.floor((1 - t) * 255 + t * 107);
+            return 'rgb(' + r + ',' + g + ',' + b + ')';
+        }
+
+        // --- Draw ---
+        function draw() {
+            requestAnimationFrame(draw);
+            if (!sndVisible) return;
+
+            // Get frequency data
+            if (analyser && (demoActive || micActive)) {
+                analyser.getByteFrequencyData(dataArray);
+            }
+
+            // Exponential smoothing
+            for (let i = 0; i < smoothed.length; i++) {
+                const target = (dataArray ? dataArray[i] || 0 : 0) * sensitivity;
+                smoothed[i] += (target - smoothed[i]) * 0.18;
+            }
+
+            // Clear
+            ctx.fillStyle = 'rgba(4, 4, 7, 0.15)';
+            ctx.fillRect(0, 0, W, H);
+
+            const barCount = BAR_COUNT;
+            const baseR = Math.min(cx, cy) * 0.22;
+            const maxBarH = Math.min(cx, cy) * 0.55;
+            rotAngle += 0.002;
+
+            // Average volume for core pulse
+            let avgVol = 0;
+            for (let i = 0; i < barCount; i++) avgVol += smoothed[i];
+            avgVol /= barCount;
+            const coreR = baseR * 0.6 + (avgVol / 255) * baseR * 0.5;
+
+            // Background radial lines
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(rotAngle);
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.04)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < 36; i++) {
+                const a = (i / 36) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(a) * 30, Math.sin(a) * 30);
+                ctx.lineTo(Math.cos(a) * maxBarH * 1.8, Math.sin(a) * maxBarH * 1.8);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Draw bars / wave / mirror
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            const drawHalf = vizMode === 'mirror' ? barCount / 2 : barCount;
+            const outerPoints = [];
+
+            for (let i = 0; i < drawHalf; i++) {
+                const val = smoothed[i] / 255;
+                const barH = val * maxBarH;
+                const angle = (i / drawHalf) * Math.PI * 2 - Math.PI / 2;
+
+                const x1 = Math.cos(angle) * baseR;
+                const y1 = Math.sin(angle) * baseR;
+                const x2 = Math.cos(angle) * (baseR + barH);
+                const y2 = Math.sin(angle) * (baseR + barH);
+
+                outerPoints.push({ x: x2, y: y2 });
+
+                if (vizMode === 'bars' || vizMode === 'mirror') {
+                    ctx.strokeStyle = barColor(i, drawHalf);
+                    ctx.lineWidth = Math.max(1, (Math.PI * 2 * baseR / drawHalf) * 0.6);
+                    ctx.globalAlpha = 0.7 + val * 0.3;
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+
+                    // Mirror: draw opposite side
+                    if (vizMode === 'mirror') {
+                        const mAngle = -angle + Math.PI;
+                        const mx1 = Math.cos(mAngle) * baseR;
+                        const my1 = Math.sin(mAngle) * baseR;
+                        const mx2 = Math.cos(mAngle) * (baseR + barH);
+                        const my2 = Math.sin(mAngle) * (baseR + barH);
+                        ctx.beginPath();
+                        ctx.moveTo(mx1, my1);
+                        ctx.lineTo(mx2, my2);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Connecting line between tops (wave / overlay)
+            if (outerPoints.length > 2) {
+                ctx.globalAlpha = vizMode === 'wave' ? 0.8 : 0.2;
+                ctx.strokeStyle = vizMode === 'wave' ? '#00F0FF' : 'rgba(0,240,255,0.3)';
+                ctx.lineWidth = vizMode === 'wave' ? 2 : 1;
+                ctx.beginPath();
+                ctx.moveTo(outerPoints[0].x, outerPoints[0].y);
+                for (let i = 1; i < outerPoints.length; i++) {
+                    const prev = outerPoints[i - 1];
+                    const curr = outerPoints[i];
+                    const cpx = (prev.x + curr.x) / 2;
+                    const cpy = (prev.y + curr.y) / 2;
+                    ctx.quadraticCurveTo(prev.x, prev.y, cpx, cpy);
+                }
+                // Close the loop
+                const last = outerPoints[outerPoints.length - 1];
+                const first = outerPoints[0];
+                ctx.quadraticCurveTo(last.x, last.y, first.x, first.y);
+                ctx.stroke();
+
+                // Fill for wave mode
+                if (vizMode === 'wave') {
+                    ctx.globalAlpha = 0.05;
+                    ctx.fillStyle = '#00F0FF';
+                    ctx.fill();
+                }
+            }
+
+            ctx.globalAlpha = 1;
+
+            // Core pulse
+            const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR);
+            coreGrad.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+            coreGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.15)');
+            coreGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+            ctx.fillStyle = coreGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, coreR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core ring
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, baseR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // IntersectionObserver
+        const sndObs = new IntersectionObserver(function(entries) {
+            sndVisible = entries[0].isIntersecting;
+        }, { threshold: 0.05 });
+        sndObs.observe(document.getElementById('sound-spectrum'));
+
+        draw();
     })();
 
     </script>
