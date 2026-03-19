@@ -522,6 +522,99 @@
             backdrop-filter: blur(12px);
             background: rgba(255, 255, 255, 0.04);
         }
+
+        /* ============================================
+           SECTION 3: Flow Field — Canvas Generative
+           ============================================ */
+        #flow-field {
+            position: relative;
+            padding: 6rem 0 8rem;
+            min-height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        .flow-layout {
+            display: flex;
+            gap: 3.5rem;
+            align-items: flex-start;
+        }
+
+        .flow-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .flow-canvas-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2 / 1;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #050508;
+            box-shadow: 0 0 60px rgba(0, 240, 255, 0.05);
+        }
+
+        .flow-canvas-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ---- Controls ---- */
+        .flow-controls {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .flow-btn {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.55em 1.2em;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.25s, border-color 0.25s, color 0.25s;
+        }
+
+        .flow-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .flow-btn.active {
+            border-color: var(--glow-cyan);
+            color: var(--glow-cyan);
+            background: rgba(0, 240, 255, 0.06);
+        }
+
+        .flow-sep {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 0 0.4rem;
+        }
+
+        /* ---- Side description ---- */
+        .flow-description {
+            flex: 0 0 260px;
+            padding-top: 0.5rem;
+        }
+
+        .flow-description p {
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -567,6 +660,45 @@
                 </aside>
 
                 <div class="geo-grid" id="geo-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 3: Flow Field — Canvas Generative
+         ============================================ -->
+    <section id="flow-field">
+        <div class="section-container">
+            <header class="section-header" data-scroll-reveal>
+                <h2 class="section-number">02 — FLOW FIELD</h2>
+                <div class="section-line"></div>
+            </header>
+
+            <div class="flow-layout">
+                <div class="flow-main">
+                    <div class="flow-canvas-wrap">
+                        <canvas id="flow-canvas"></canvas>
+                    </div>
+                    <div class="flow-controls">
+                        <button class="flow-btn" id="ff-regenerate">Regenerate</button>
+                        <button class="flow-btn" id="ff-pause">Pause</button>
+                        <button class="flow-btn" id="ff-clear">Clear Trails</button>
+                        <div class="flow-sep"></div>
+                        <button class="flow-btn active" data-palette="neon">Neon</button>
+                        <button class="flow-btn" data-palette="ocean">Ocean</button>
+                        <button class="flow-btn" data-palette="fire">Fire</button>
+                    </div>
+                </div>
+                <aside class="flow-description">
+                    <p>A flow field maps a direction to every point in space using a noise function. Thousands of particles follow these invisible currents, leaving semi-transparent trails that reveal the underlying mathematical structure.</p>
+                    <p>The field evolves slowly over time as the noise offset shifts, creating an organic, ever-changing landscape of motion. Click anywhere to create a burst of turbulence.</p>
+                    <div style="margin-top:1.2rem">
+                        <span class="tech-tag">Canvas 2D</span>
+                        <span class="tech-tag">Simplex Noise</span>
+                        <span class="tech-tag">Float32Array</span>
+                        <span class="tech-tag">Particle Trails</span>
+                    </div>
+                </aside>
             </div>
         </div>
     </section>
@@ -993,6 +1125,249 @@
     document.querySelectorAll('[data-scroll-reveal]').forEach(el => {
         scrollRevealObserver.observe(el);
     });
+
+    /* ============================================
+       SECTION 3: Flow Field
+       ============================================ */
+    (function initFlowField() {
+        const cvs = document.getElementById('flow-canvas');
+        if (!cvs) return;
+        const ctx = cvs.getContext('2d');
+        const wrap = cvs.parentElement;
+
+        // --- Simplex 2D noise (compact) ---
+        const F2 = 0.5 * (Math.sqrt(3) - 1);
+        const G2 = (3 - Math.sqrt(3)) / 6;
+        const grad2 = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+        let perm = new Uint8Array(512);
+        function seedNoise(s) {
+            const p = new Uint8Array(256);
+            for (let i = 0; i < 256; i++) p[i] = i;
+            for (let i = 255; i > 0; i--) {
+                s = (s * 16807 + 0) % 2147483647;
+                const j = s % (i + 1);
+                [p[i], p[j]] = [p[j], p[i]];
+            }
+            for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
+        }
+        function noise2d(x, y) {
+            const s = (x + y) * F2;
+            const i = Math.floor(x + s), j = Math.floor(y + s);
+            const t = (i + j) * G2;
+            const X0 = i - t, Y0 = j - t;
+            const x0 = x - X0, y0 = y - Y0;
+            const i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
+            const x1 = x0 - i1 + G2, y1 = y0 - j1 + G2;
+            const x2 = x0 - 1 + 2*G2, y2 = y0 - 1 + 2*G2;
+            const ii = i & 255, jj = j & 255;
+            let n0 = 0, n1 = 0, n2 = 0;
+            let t0 = 0.5 - x0*x0 - y0*y0;
+            if (t0 > 0) { t0 *= t0; const g = grad2[perm[ii+perm[jj]] & 7]; n0 = t0*t0*(g[0]*x0+g[1]*y0); }
+            let t1 = 0.5 - x1*x1 - y1*y1;
+            if (t1 > 0) { t1 *= t1; const g = grad2[perm[ii+i1+perm[jj+j1]] & 7]; n1 = t1*t1*(g[0]*x1+g[1]*y1); }
+            let t2 = 0.5 - x2*x2 - y2*y2;
+            if (t2 > 0) { t2 *= t2; const g = grad2[perm[ii+1+perm[jj+1]] & 7]; n2 = t2*t2*(g[0]*x2+g[1]*y2); }
+            return 70 * (n0 + n1 + n2);
+        }
+
+        // --- Config ---
+        const PARTICLE_COUNT = 2500;
+        const NOISE_SCALE = 0.003;
+        let zOff = 0;
+        let seed = Math.floor(Math.random() * 99999);
+        seedNoise(seed);
+
+        // --- Palettes ---
+        const palettes = {
+            neon:  [[0,240,255],[168,85,247],[255,45,107]],
+            ocean: [[10,180,220],[20,80,180],[8,210,150]],
+            fire:  [[255,160,20],[255,60,30],[255,220,60]]
+        };
+        let currentPalette = 'neon';
+
+        function getColor(t) {
+            const pal = palettes[currentPalette];
+            t = ((t % 1) + 1) % 1;
+            const idx = t * (pal.length - 1);
+            const i = Math.floor(idx);
+            const f = idx - i;
+            const a = pal[Math.min(i, pal.length-1)];
+            const b = pal[Math.min(i+1, pal.length-1)];
+            return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f];
+        }
+
+        // --- Canvas sizing ---
+        let W, H, dpr;
+        function resize() {
+            const rect = wrap.getBoundingClientRect();
+            dpr = Math.min(window.devicePixelRatio, 2);
+            W = rect.width;
+            H = rect.height;
+            cvs.width = W * dpr;
+            cvs.height = H * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, W, H);
+        }
+        resize();
+
+        // --- Particles ---
+        let px = new Float32Array(PARTICLE_COUNT);
+        let py = new Float32Array(PARTICLE_COUNT);
+        let pvx = new Float32Array(PARTICLE_COUNT);
+        let pvy = new Float32Array(PARTICLE_COUNT);
+        let pcolor = new Array(PARTICLE_COUNT);
+
+        function resetParticles() {
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                px[i] = Math.random() * W;
+                py[i] = Math.random() * H;
+                pvx[i] = 0;
+                pvy[i] = 0;
+                const c = getColor(px[i] / W);
+                pcolor[i] = `rgba(${c[0]|0},${c[1]|0},${c[2]|0},0.5)`;
+            }
+        }
+        resetParticles();
+
+        // --- Mouse ---
+        let mouseX = -999, mouseY = -999;
+        const bursts = [];
+
+        cvs.addEventListener('mousemove', (e) => {
+            const rect = cvs.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        }, { passive: true });
+
+        cvs.addEventListener('mouseleave', () => {
+            mouseX = -999; mouseY = -999;
+        }, { passive: true });
+
+        cvs.addEventListener('click', (e) => {
+            const rect = cvs.getBoundingClientRect();
+            bursts.push({
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+                life: 1.0
+            });
+        });
+
+        // --- Animation ---
+        let paused = false;
+        let ffVisible = false;
+        let ffAnimId;
+
+        function update() {
+            ffAnimId = requestAnimationFrame(update);
+            if (paused || !ffVisible) return;
+
+            // Semi-transparent overlay for trails
+            ctx.fillStyle = 'rgba(5, 5, 8, 0.025)';
+            ctx.fillRect(0, 0, W, H);
+
+            zOff += 0.0008;
+
+            // Decay bursts
+            for (let b = bursts.length - 1; b >= 0; b--) {
+                bursts[b].life -= 0.015;
+                if (bursts[b].life <= 0) bursts.splice(b, 1);
+            }
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                let angle = noise2d(px[i] * NOISE_SCALE + zOff, py[i] * NOISE_SCALE + zOff * 0.7) * Math.PI * 4;
+
+                // Mouse influence
+                const mdx = px[i] - mouseX;
+                const mdy = py[i] - mouseY;
+                const mDist = Math.sqrt(mdx*mdx + mdy*mdy);
+                if (mDist < 120 && mDist > 0) {
+                    angle += Math.atan2(mdy, mdx) * (1 - mDist/120) * 2;
+                }
+
+                // Burst influence
+                for (let b = 0; b < bursts.length; b++) {
+                    const br = bursts[b];
+                    const bdx = px[i] - br.x;
+                    const bdy = py[i] - br.y;
+                    const bDist = Math.sqrt(bdx*bdx + bdy*bdy);
+                    if (bDist < 180 && bDist > 0) {
+                        const force = br.life * (1 - bDist/180) * 6;
+                        pvx[i] += (bdx / bDist) * force;
+                        pvy[i] += (bdy / bDist) * force;
+                    }
+                }
+
+                pvx[i] += Math.cos(angle) * 0.4;
+                pvy[i] += Math.sin(angle) * 0.4;
+                pvx[i] *= 0.96;
+                pvy[i] *= 0.96;
+
+                px[i] += pvx[i];
+                py[i] += pvy[i];
+
+                // Wrap edges
+                if (px[i] < 0) px[i] = W;
+                if (px[i] > W) px[i] = 0;
+                if (py[i] < 0) py[i] = H;
+                if (py[i] > H) py[i] = 0;
+
+                // Draw
+                const speed = Math.sqrt(pvx[i]*pvx[i] + pvy[i]*pvy[i]);
+                const size = Math.min(2.5, 0.5 + speed * 0.4);
+                ctx.fillStyle = pcolor[i];
+                ctx.fillRect(px[i], py[i], size, size);
+            }
+        }
+
+        // --- IntersectionObserver ---
+        const ffObs = new IntersectionObserver((entries) => {
+            ffVisible = entries[0].isIntersecting;
+        }, { threshold: 0.05 });
+        ffObs.observe(document.getElementById('flow-field'));
+
+        update();
+
+        // --- Controls ---
+        document.getElementById('ff-regenerate').addEventListener('click', () => {
+            seed = Math.floor(Math.random() * 99999);
+            seedNoise(seed);
+            zOff = 0;
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, W, H);
+            resetParticles();
+        });
+
+        document.getElementById('ff-pause').addEventListener('click', function() {
+            paused = !paused;
+            this.textContent = paused ? 'Play' : 'Pause';
+            this.classList.toggle('active', paused);
+        });
+
+        document.getElementById('ff-clear').addEventListener('click', () => {
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, W, H);
+        });
+
+        document.querySelectorAll('[data-palette]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('[data-palette]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPalette = this.dataset.palette;
+                // Re-assign particle colors
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const c = getColor(px[i] / W);
+                    pcolor[i] = `rgba(${c[0]|0},${c[1]|0},${c[2]|0},0.5)`;
+                }
+            });
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            resize();
+            resetParticles();
+        }, { passive: true });
+    })();
 
     </script>
 </body>
