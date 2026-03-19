@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNESTHESIA — Code Meets Sensation</title>
+
+    <!-- Fonts -->
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================
+           SYNESTHESIA — Global Styles
+           ============================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0A0A0F;
+            --bg-secondary: #0D0D14;
+            --glow-cyan: #00F0FF;
+            --glow-magenta: #FF2D6B;
+            --glow-purple: #A855F7;
+            --accent-emerald: #10B981;
+            --accent-amber: #F59E0B;
+            --text-primary: #E8E8F0;
+            --text-secondary: #6B6B80;
+            --font-display: 'Clash Display', 'Space Grotesk', sans-serif;
+            --font-body: 'Satoshi', 'DM Sans', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           SECTION 1: Hero — Particle Universe
+           ============================================ */
+        #hero {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Vignette overlay */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: radial-gradient(
+                ellipse at center,
+                transparent 50%,
+                rgba(10, 10, 15, 0.4) 75%,
+                rgba(10, 10, 15, 0.85) 100%
+            );
+        }
+
+        /* Hero content overlay */
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* ---- Glitch Title ---- */
+        .glitch {
+            font-family: var(--font-display);
+            font-size: clamp(4rem, 8vw, 9rem);
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: var(--text-primary);
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .glitch::before {
+            color: var(--glow-cyan);
+            z-index: -1;
+            animation: glitch-cyan 4s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            color: var(--glow-magenta);
+            z-index: -2;
+            animation: glitch-magenta 4s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-cyan {
+            0%, 87%, 92%, 100% {
+                clip-path: inset(0 0 100% 0);
+                transform: translate(0);
+            }
+            88% {
+                clip-path: inset(10% 0 60% 0);
+                transform: translate(-4px, -2px);
+            }
+            89% {
+                clip-path: inset(55% 0 10% 0);
+                transform: translate(4px, 1px);
+            }
+            90% {
+                clip-path: inset(25% 0 40% 0);
+                transform: translate(-3px, 2px);
+            }
+            91% {
+                clip-path: inset(70% 0 5% 0);
+                transform: translate(5px, -1px);
+            }
+        }
+
+        @keyframes glitch-magenta {
+            0%, 84%, 90%, 100% {
+                clip-path: inset(0 0 100% 0);
+                transform: translate(0);
+            }
+            85% {
+                clip-path: inset(40% 0 20% 0);
+                transform: translate(4px, 2px);
+            }
+            86% {
+                clip-path: inset(5% 0 70% 0);
+                transform: translate(-3px, -1px);
+            }
+            87% {
+                clip-path: inset(60% 0 15% 0);
+                transform: translate(3px, 1px);
+            }
+            88% {
+                clip-path: inset(15% 0 50% 0);
+                transform: translate(-5px, 2px);
+            }
+            89% {
+                clip-path: inset(80% 0 2% 0);
+                transform: translate(2px, -2px);
+            }
+        }
+
+        /* ---- Subtitle / Typewriter ---- */
+        .subtitle {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            font-weight: 300;
+            letter-spacing: 0.35em;
+            color: var(--text-secondary);
+            margin-top: 1.2rem;
+            min-height: 2em;
+            text-transform: uppercase;
+        }
+
+        .subtitle .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.1em;
+            background: var(--glow-cyan);
+            margin-left: 3px;
+            vertical-align: text-bottom;
+            animation: blink-cursor 0.75s step-end infinite;
+        }
+
+        @keyframes blink-cursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* ---- Scroll Indicator ---- */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+            pointer-events: none;
+            opacity: 0;
+            animation: fade-in-up 1s 3.5s forwards;
+        }
+
+        .scroll-indicator span {
+            font-family: var(--font-body);
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.3em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .scroll-indicator .arrow {
+            width: 20px;
+            height: 20px;
+            border-right: 1.5px solid var(--glow-cyan);
+            border-bottom: 1.5px solid var(--glow-cyan);
+            transform: rotate(45deg);
+            animation: bounce-arrow 2s ease-in-out infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes bounce-arrow {
+            0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.6; }
+            50% { transform: rotate(45deg) translateY(8px); opacity: 1; }
+        }
+
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* ---- Placeholder for next sections ---- */
+        .next-placeholder {
+            height: 100vh;
+            background: var(--bg-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         SECTION 1: Hero — Particle Universe
+         ============================================ -->
+    <section id="hero">
+        <canvas id="hero-canvas"></canvas>
+        <div class="vignette"></div>
+        <div class="hero-content">
+            <h1 class="glitch" data-text="SYNESTHESIA">SYNESTHESIA</h1>
+            <p class="subtitle" id="typewriter"></p>
+        </div>
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+            <div class="arrow"></div>
+        </div>
+    </section>
+
+    <!-- Placeholder so scroll indicator makes sense -->
+    <div class="next-placeholder"></div>
+
+    <!-- ============================================
+         Three.js via importmap (ES modules)
+         ============================================ -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    /* ============================================
+       Simplex 3D Noise  (compact GLSL, Ashima Arts)
+       ============================================ */
+    const NOISE_GLSL = /* glsl */`
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
+        vec4 mod289(vec4 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
+        vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+        float snoise(vec3 v) {
+            const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+            const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+
+            vec3 i  = floor(v + dot(v, C.yyy));
+            vec3 x0 = v - i + dot(i, C.xxx);
+
+            vec3 g = step(x0.yzx, x0.xyz);
+            vec3 l = 1.0 - g;
+            vec3 i1 = min(g.xyz, l.zxy);
+            vec3 i2 = max(g.xyz, l.zxy);
+
+            vec3 x1 = x0 - i1 + C.xxx;
+            vec3 x2 = x0 - i2 + C.yyy;
+            vec3 x3 = x0 - D.yyy;
+
+            i = mod289(i);
+            vec4 p = permute(permute(permute(
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+            float n_ = 0.142857142857;
+            vec3 ns = n_ * D.wyz - D.xzx;
+
+            vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+
+            vec4 x_ = floor(j * ns.z);
+            vec4 y_ = floor(j - 7.0 * x_);
+
+            vec4 x = x_ * ns.x + ns.yyyy;
+            vec4 y = y_ * ns.x + ns.yyyy;
+            vec4 h = 1.0 - abs(x) - abs(y);
+
+            vec4 b0 = vec4(x.xy, y.xy);
+            vec4 b1 = vec4(x.zw, y.zw);
+
+            vec4 s0 = floor(b0) * 2.0 + 1.0;
+            vec4 s1 = floor(b1) * 2.0 + 1.0;
+            vec4 sh = -step(h, vec4(0.0));
+
+            vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+            vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+
+            vec3 p0 = vec3(a0.xy, h.x);
+            vec3 p1 = vec3(a0.zw, h.y);
+            vec3 p2 = vec3(a1.xy, h.z);
+            vec3 p3 = vec3(a1.zw, h.w);
+
+            vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+            p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+
+            vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+            m = m * m;
+            return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+        }
+    `;
+
+    /* ============================================
+       Shaders
+       ============================================ */
+    const vertexShader = /* glsl */`
+        uniform float uTime;
+        uniform vec2 uMouse;
+        uniform float uNoiseAmp;
+
+        attribute vec3 aNormal;
+        attribute vec3 aColor;
+        attribute float aSize;
+        attribute float aPhase;
+
+        varying vec3 vColor;
+        varying float vAlpha;
+
+        ${NOISE_GLSL}
+
+        void main() {
+            // Noise deformation along surface normal
+            float n = snoise(vec3(
+                position.x * 0.55 + uTime * 0.12,
+                position.y * 0.55 + uTime * 0.08,
+                position.z * 0.55 + uTime * 0.10
+            ));
+            float n2 = snoise(vec3(
+                position.z * 0.3 - uTime * 0.06,
+                position.x * 0.3 + uTime * 0.09,
+                position.y * 0.3
+            ));
+            vec3 pos = position + aNormal * (n * uNoiseAmp + n2 * uNoiseAmp * 0.4);
+
+            // Subtle breathing
+            float breath = sin(uTime * 0.5 + aPhase) * 0.06;
+            pos += aNormal * breath;
+
+            vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
+            gl_Position = projectionMatrix * mvPos;
+
+            // Mouse repulsion in NDC
+            vec2 ndc = gl_Position.xy / gl_Position.w;
+            float distMouse = length(ndc - uMouse);
+            float repulseRadius = 0.22;
+            if (distMouse < repulseRadius) {
+                vec2 pushDir = normalize(ndc - uMouse);
+                float strength = (1.0 - distMouse / repulseRadius);
+                strength = strength * strength * 0.35;
+                gl_Position.xy += pushDir * strength * gl_Position.w;
+            }
+
+            // Point size — depth-based
+            gl_PointSize = aSize * (280.0 / -mvPos.z);
+            gl_PointSize = max(gl_PointSize, 0.5);
+
+            vColor = aColor;
+            // Fade slightly for distant particles
+            vAlpha = smoothstep(18.0, 4.0, -mvPos.z);
+        }
+    `;
+
+    const fragmentShader = /* glsl */`
+        varying vec3 vColor;
+        varying float vAlpha;
+
+        void main() {
+            float d = length(gl_PointCoord - vec2(0.5)) * 2.0;
+            if (d > 1.0) discard;
+
+            // Soft glow falloff
+            float alpha = 1.0 - d * d;
+            alpha *= vAlpha * 0.85;
+
+            // Core is brighter
+            float core = smoothstep(0.5, 0.0, d) * 0.4;
+
+            gl_FragColor = vec4(vColor + core, alpha);
+        }
+    `;
+
+    /* ============================================
+       Scene Setup
+       ============================================ */
+    const canvas = document.getElementById('hero-canvas');
+    const renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: false,
+        alpha: true,
+        powerPreference: 'high-performance'
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 8;
+
+    /* ============================================
+       Post-Processing: Bloom
+       ============================================ */
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+
+    const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.7,   // strength
+        0.5,   // radius
+        0.78   // threshold
+    );
+    composer.addPass(bloomPass);
+
+    /* ============================================
+       Particle Torus Geometry
+       ============================================ */
+    const PARTICLE_COUNT = 18000;
+    const R = 2.8;  // major radius
+    const r = 1.05; // minor radius
+
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const normals   = new Float32Array(PARTICLE_COUNT * 3);
+    const colors    = new Float32Array(PARTICLE_COUNT * 3);
+    const sizes     = new Float32Array(PARTICLE_COUNT);
+    const phases    = new Float32Array(PARTICLE_COUNT);
+
+    // Color stops
+    const C_CYAN    = [0, 240/255, 1];
+    const C_PURPLE  = [168/255, 85/255, 247/255];
+    const C_MAGENTA = [1, 45/255, 107/255];
+
+    function lerpColor(a, b, t) {
+        return [
+            a[0] + (b[0] - a[0]) * t,
+            a[1] + (b[1] - a[1]) * t,
+            a[2] + (b[2] - a[2]) * t
+        ];
+    }
+
+    function getGradientColor(t) {
+        t = ((t % 1) + 1) % 1; // clamp 0-1
+        if (t < 0.5) return lerpColor(C_CYAN, C_PURPLE, t * 2);
+        return lerpColor(C_PURPLE, C_MAGENTA, (t - 0.5) * 2);
+    }
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const u = Math.random() * Math.PI * 2;
+        const v = Math.random() * Math.PI * 2;
+
+        // Torus parametric
+        const x = (R + r * Math.cos(v)) * Math.cos(u);
+        const y = (R + r * Math.cos(v)) * Math.sin(u);
+        const z = r * Math.sin(v);
+
+        positions[i * 3]     = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+
+        // Normal = direction from tube center to surface point
+        const nx = Math.cos(v) * Math.cos(u);
+        const ny = Math.cos(v) * Math.sin(u);
+        const nz = Math.sin(v);
+        normals[i * 3]     = nx;
+        normals[i * 3 + 1] = ny;
+        normals[i * 3 + 2] = nz;
+
+        // Color based on u (angle around main ring)
+        const col = getGradientColor(u / (Math.PI * 2));
+        colors[i * 3]     = col[0];
+        colors[i * 3 + 1] = col[1];
+        colors[i * 3 + 2] = col[2];
+
+        // Random sizes — weighted toward smaller
+        sizes[i] = 1.2 + Math.random() * 2.8 + (Math.random() < 0.05 ? 4 : 0);
+
+        // Random phase for breathing offset
+        phases[i] = Math.random() * Math.PI * 2;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('aNormal',  new THREE.BufferAttribute(normals, 3));
+    geometry.setAttribute('aColor',   new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute('aPhase',   new THREE.BufferAttribute(phases, 1));
+
+    const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: {
+            uTime:     { value: 0 },
+            uMouse:    { value: new THREE.Vector2(9, 9) }, // start offscreen
+            uNoiseAmp: { value: 0.55 }
+        },
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    /* ============================================
+       Mouse Handling (throttled to ~30fps)
+       ============================================ */
+    const mouse = { x: 9, y: 9 };
+    let lastMouseUpdate = 0;
+    const MOUSE_INTERVAL = 1000 / 30;
+
+    window.addEventListener('mousemove', (e) => {
+        const now = performance.now();
+        if (now - lastMouseUpdate < MOUSE_INTERVAL) return;
+        lastMouseUpdate = now;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    }, { passive: true });
+
+    // Move mouse offscreen when leaving
+    window.addEventListener('mouseleave', () => {
+        mouse.x = 9;
+        mouse.y = 9;
+    }, { passive: true });
+
+    /* ============================================
+       Viewport Observer (pause when not visible)
+       ============================================ */
+    let isVisible = true;
+    const heroSection = document.getElementById('hero');
+
+    const observer = new IntersectionObserver((entries) => {
+        isVisible = entries[0].isIntersecting;
+    }, { threshold: 0.05 });
+    observer.observe(heroSection);
+
+    /* ============================================
+       Resize Handler
+       ============================================ */
+    window.addEventListener('resize', () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        composer.setSize(w, h);
+    }, { passive: true });
+
+    /* ============================================
+       Animation Loop
+       ============================================ */
+    let animId;
+
+    function animate(time) {
+        animId = requestAnimationFrame(animate);
+        if (!isVisible) return;
+
+        const t = time * 0.001; // seconds
+        material.uniforms.uTime.value = t;
+
+        // Smooth mouse lerp
+        const mu = material.uniforms.uMouse.value;
+        mu.x += (mouse.x - mu.x) * 0.08;
+        mu.y += (mouse.y - mu.y) * 0.08;
+
+        // Slow auto-rotation
+        particles.rotation.y = t * 0.08;
+        particles.rotation.x = Math.sin(t * 0.03) * 0.15;
+
+        composer.render();
+    }
+
+    animate(0);
+
+    /* ============================================
+       Typewriter Effect
+       ============================================ */
+    const typewriterEl = document.getElementById('typewriter');
+    const typewriterText = 'Code Meets Sensation';
+    let charIndex = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+
+    function typeNext() {
+        if (charIndex <= typewriterText.length) {
+            typewriterEl.textContent = typewriterText.slice(0, charIndex);
+            typewriterEl.appendChild(cursor);
+            charIndex++;
+            setTimeout(typeNext, 70 + Math.random() * 60);
+        }
+    }
+
+    // Start typewriter after a short delay
+    setTimeout(typeNext, 1200);
+
+    </script>
+</body>
+</html>
