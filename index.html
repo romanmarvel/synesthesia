@@ -754,6 +754,126 @@
             line-height: 1.7;
             color: var(--text-secondary);
         }
+
+        /* ============================================
+           SECTION 5: Depth Perception — Parallax
+           ============================================ */
+        #depth-perception {
+            position: relative;
+            height: 300vh;
+            overflow: hidden;
+        }
+
+        .depth-bg {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: hidden;
+            perspective: 1px;
+            transform-style: preserve-3d;
+        }
+
+        /* Parallax layers */
+        .depth-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        /* Layer 1: Far blurred circles */
+        .depth-l1-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.15;
+        }
+
+        /* Layer 2: SVG geometric lines */
+        .depth-l2-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(168,85,247,0.15), transparent);
+            height: 1px;
+            transform-origin: center;
+        }
+
+        /* Layer 3: text quotes */
+        .depth-quote {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, 0);
+            text-align: center;
+            opacity: 0;
+            transition: none;
+            will-change: transform, opacity;
+        }
+
+        .depth-quote-text {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            line-height: 1.3;
+            color: var(--text-primary);
+        }
+
+        /* Layer 4: Small detail particles */
+        .depth-detail {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+
+        /* Layer 5: Close blurred shapes */
+        .depth-l5-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.08;
+        }
+
+        /* Section title */
+        .depth-title {
+            position: absolute;
+            top: 8vh;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            text-align: center;
+            will-change: opacity, filter;
+        }
+
+        .depth-title .section-number {
+            filter: blur(10px);
+            opacity: 0;
+            transition: filter 0.8s ease, opacity 0.8s ease;
+        }
+
+        .depth-title.in-view .section-number {
+            filter: blur(0);
+            opacity: 1;
+        }
+
+        /* Infinity symbol */
+        .depth-infinity {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-display);
+            font-size: 18rem;
+            font-weight: 200;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(0, 240, 255, 0.3);
+            opacity: 0;
+            will-change: opacity, transform;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -900,6 +1020,42 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 5: Depth Perception — Parallax
+         ============================================ -->
+    <section id="depth-perception">
+        <div class="depth-bg" id="depth-bg">
+            <!-- Title -->
+            <div class="depth-title" data-scroll-reveal>
+                <h2 class="section-number">04 — DEPTH PERCEPTION</h2>
+            </div>
+
+            <!-- Layer 1: Far blurred circles -->
+            <div class="depth-layer" id="depth-l1"></div>
+            <!-- Layer 2: Geometric lines -->
+            <div class="depth-layer" id="depth-l2"></div>
+            <!-- Layer 3: Quotes -->
+            <div class="depth-layer" id="depth-l3">
+                <div class="depth-quote" data-quote="0" style="top:30vh">
+                    <span class="depth-quote-text">Code is the brush</span>
+                </div>
+                <div class="depth-quote" data-quote="1" style="top:30vh">
+                    <span class="depth-quote-text">Mathematics is the palette</span>
+                </div>
+                <div class="depth-quote" data-quote="2" style="top:30vh">
+                    <span class="depth-quote-text">Screen is the canvas</span>
+                </div>
+            </div>
+            <!-- Layer 4: Small details -->
+            <div class="depth-layer" id="depth-l4"></div>
+            <!-- Layer 5: Close blurred shapes -->
+            <div class="depth-layer" id="depth-l5"></div>
+
+            <!-- Infinity symbol -->
+            <div class="depth-infinity" id="depth-infinity">∞</div>
         </div>
     </section>
 
@@ -1742,6 +1898,170 @@
         morphObs.observe(document.getElementById('metamorphosis'));
 
         animateMorph(0);
+    })();
+
+    /* ============================================
+       SECTION 5: Depth Perception — Parallax
+       ============================================ */
+    (function initDepthPerception() {
+        const section = document.getElementById('depth-perception');
+        if (!section) return;
+
+        const bg = document.getElementById('depth-bg');
+        const l1 = document.getElementById('depth-l1');
+        const l2 = document.getElementById('depth-l2');
+        const l3 = document.getElementById('depth-l3');
+        const l4 = document.getElementById('depth-l4');
+        const l5 = document.getElementById('depth-l5');
+        const infinityEl = document.getElementById('depth-infinity');
+        const quotes = l3.querySelectorAll('.depth-quote');
+
+        // --- Generate Layer 1: Big blurred circles ---
+        const l1Colors = ['#00F0FF','#A855F7','#FF2D6B','#10B981','#A855F7'];
+        for (let i = 0; i < 5; i++) {
+            const el = document.createElement('div');
+            el.className = 'depth-l1-circle';
+            const size = 200 + Math.random() * 300;
+            el.style.width = size + 'px';
+            el.style.height = size + 'px';
+            el.style.background = l1Colors[i];
+            el.style.left = (10 + Math.random() * 80) + '%';
+            el.style.top = (10 + Math.random() * 80) + '%';
+            l1.appendChild(el);
+        }
+
+        // --- Generate Layer 2: Geometric lines ---
+        for (let i = 0; i < 12; i++) {
+            const el = document.createElement('div');
+            el.className = 'depth-l2-line';
+            el.style.width = (100 + Math.random() * 400) + 'px';
+            el.style.left = (Math.random() * 90) + '%';
+            el.style.top = (Math.random() * 100) + '%';
+            el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+            l2.appendChild(el);
+        }
+
+        // --- Generate Layer 4: Small detail particles ---
+        const l4Colors = ['#00F0FF','#A855F7','#FF2D6B','#F59E0B'];
+        for (let i = 0; i < 40; i++) {
+            const el = document.createElement('div');
+            el.className = 'depth-detail';
+            el.style.background = l4Colors[i % l4Colors.length];
+            el.style.left = (Math.random() * 100) + '%';
+            el.style.top = (Math.random() * 100) + '%';
+            const s = 2 + Math.random() * 5;
+            el.style.width = s + 'px';
+            el.style.height = s + 'px';
+            l4.appendChild(el);
+        }
+
+        // --- Generate Layer 5: Close blurred shapes ---
+        const l5Colors = ['#00F0FF','#FF2D6B','#A855F7'];
+        for (let i = 0; i < 3; i++) {
+            const el = document.createElement('div');
+            el.className = 'depth-l5-shape';
+            const size = 300 + Math.random() * 200;
+            el.style.width = size + 'px';
+            el.style.height = size + 'px';
+            el.style.background = l5Colors[i];
+            el.style.left = (-10 + Math.random() * 100) + '%';
+            el.style.top = (20 + Math.random() * 60) + '%';
+            l5.appendChild(el);
+        }
+
+        // --- Background color stops ---
+        const bgColors = [
+            [10, 10, 15],    // dark
+            [8, 15, 40],     // deep blue
+            [25, 10, 45],    // deep purple
+            [10, 10, 15]     // dark
+        ];
+
+        function lerpRGB(a, b, t) {
+            return [
+                a[0] + (b[0] - a[0]) * t,
+                a[1] + (b[1] - a[1]) * t,
+                a[2] + (b[2] - a[2]) * t
+            ];
+        }
+
+        function getBgColor(progress) {
+            const seg = progress * (bgColors.length - 1);
+            const i = Math.min(Math.floor(seg), bgColors.length - 2);
+            const t = seg - i;
+            const c = lerpRGB(bgColors[i], bgColors[i+1], t);
+            return 'rgb(' + (c[0]|0) + ',' + (c[1]|0) + ',' + (c[2]|0) + ')';
+        }
+
+        // --- Scroll handler ---
+        let ticking = false;
+
+        function onScroll() {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(updateParallax);
+        }
+
+        function updateParallax() {
+            ticking = false;
+            const rect = section.getBoundingClientRect();
+            const sectionH = section.offsetHeight;
+            const viewH = window.innerHeight;
+
+            // progress: 0 when section top hits viewport bottom, 1 when section bottom hits viewport top
+            const rawProgress = (viewH - rect.top) / (sectionH + viewH);
+            const progress = Math.max(0, Math.min(1, rawProgress));
+
+            // scrollInSection: 0 at start, 1 at end (relative to section top)
+            const scrollIn = Math.max(0, Math.min(1, -rect.top / (sectionH - viewH)));
+
+            if (progress <= 0 || progress >= 1) return;
+
+            // Background color
+            bg.style.background = getBgColor(scrollIn);
+
+            // Parallax layers — different speeds
+            const baseOffset = scrollIn * (sectionH - viewH);
+            l1.style.transform = 'translate3d(0,' + (-baseOffset * 0.1) + 'px,0)';
+            l2.style.transform = 'translate3d(0,' + (-baseOffset * 0.25) + 'px,0)';
+            // l3 (quotes) handled separately
+            l4.style.transform = 'translate3d(0,' + (-baseOffset * 0.6) + 'px,0)';
+            l5.style.transform = 'translate3d(0,' + (-baseOffset * 0.8) + 'px,0)';
+
+            // Quotes: each visible in its 1/3 of scroll
+            quotes.forEach(function(q, i) {
+                const qStart = i / 3;
+                const qEnd = (i + 1) / 3;
+                const qMid = (qStart + qEnd) / 2;
+
+                if (scrollIn >= qStart && scrollIn <= qEnd) {
+                    // fade in first half, fade out second half
+                    const localT = (scrollIn - qStart) / (qEnd - qStart);
+                    const fadeIn = Math.min(1, localT * 3);
+                    const fadeOut = Math.max(0, 1 - (localT - 0.6) * 3);
+                    const opacity = Math.min(fadeIn, fadeOut);
+                    const yOffset = (1 - localT) * 60 - 30;
+                    q.style.opacity = opacity;
+                    q.style.transform = 'translate(-50%,' + yOffset + 'px)';
+                } else {
+                    q.style.opacity = 0;
+                }
+            });
+
+            // Infinity symbol: appears in last 20% of scroll
+            const infStart = 0.75;
+            if (scrollIn > infStart) {
+                const infT = (scrollIn - infStart) / (1 - infStart);
+                infinityEl.style.opacity = infT;
+                infinityEl.style.transform = 'translateX(-50%) scale(' + (0.5 + infT * 0.5) + ')';
+            } else {
+                infinityEl.style.opacity = 0;
+            }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        // Initial call
+        onScroll();
     })();
 
     </script>
