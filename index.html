@@ -549,7 +549,7 @@
         <div class="section-container">
             <header class="section-header" data-scroll-reveal>
                 <h2 class="section-number">01 — GEOMETRIC PULSE</h2>
-                <span class="section-line"></span>
+                <div class="section-line"></div>
             </header>
 
             <div class="geo-layout">
@@ -971,10 +971,7 @@
 
                 // Staggered wave delay based on diagonal distance
                 const delay = ((row + col) * 0.18).toFixed(2);
-                // Vary speed slightly per element
-                const speedMult = 0.8 + Math.random() * 0.6;
                 shape.style.animationDelay = `${delay}s`;
-                shape.style.animationDuration = `${(parseFloat(getComputedStyle(shape).animationDuration) || 5) * speedMult}s`;
 
                 cell.appendChild(shape);
                 grid.appendChild(cell);
