@@ -615,6 +615,145 @@
             color: var(--text-secondary);
             margin-bottom: 1rem;
         }
+
+        /* ============================================
+           SECTION 4: Metamorphosis — SVG Morphing
+           ============================================ */
+        #metamorphosis {
+            position: relative;
+            padding: 6rem 0 8rem;
+            min-height: 100vh;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .morph-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .morph-stage {
+            position: relative;
+            width: 500px;
+            height: 500px;
+        }
+
+        .morph-svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .morph-path-fill {
+            transition: none;
+        }
+
+        .morph-path-stroke {
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-dasharray: 2000;
+            stroke-dashoffset: 2000;
+            transition: none;
+        }
+
+        .morph-path-stroke.drawing {
+            animation: draw-stroke 2.5s ease forwards;
+        }
+
+        @keyframes draw-stroke {
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* Orbital dots */
+        .orbital-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--glow-cyan);
+            box-shadow: 0 0 12px var(--glow-cyan);
+            pointer-events: none;
+        }
+
+        .orbital-line {
+            position: absolute;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        /* Timeline */
+        .morph-timeline {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-top: 1rem;
+        }
+
+        .morph-tl-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.6rem 1.5rem;
+            position: relative;
+            transition: color 0.3s;
+            color: var(--text-secondary);
+        }
+
+        .morph-tl-item:hover {
+            color: var(--text-primary);
+        }
+
+        .morph-tl-item.active {
+            color: var(--glow-cyan);
+        }
+
+        .morph-tl-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            background: transparent;
+            transition: background 0.3s, box-shadow 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .morph-tl-item.active .morph-tl-dot {
+            background: var(--glow-cyan);
+            box-shadow: 0 0 10px var(--glow-cyan);
+        }
+
+        .morph-tl-label {
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Connector line between timeline dots */
+        .morph-tl-connector {
+            flex: 0 0 40px;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            align-self: flex-start;
+            margin-top: calc(0.6rem + 5px);
+        }
+
+        .morph-description {
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .morph-description p {
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
@@ -699,6 +838,67 @@
                         <span class="tech-tag">Particle Trails</span>
                     </div>
                 </aside>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 4: Metamorphosis — SVG Morphing
+         ============================================ -->
+    <section id="metamorphosis">
+        <div class="section-container">
+            <header class="section-header" data-scroll-reveal>
+                <h2 class="section-number">03 — METAMORPHOSIS</h2>
+                <div class="section-line"></div>
+            </header>
+
+            <div class="morph-layout">
+                <div class="morph-stage" id="morph-stage">
+                    <svg class="morph-svg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <!-- Rotating gradient fill -->
+                            <linearGradient id="morph-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="var(--glow-cyan)" />
+                                <stop offset="50%" stop-color="var(--glow-purple)" />
+                                <stop offset="100%" stop-color="var(--glow-magenta)" />
+                                <animateTransform attributeName="gradientTransform" type="rotate" from="0 250 250" to="360 250 250" dur="8s" repeatCount="indefinite"/>
+                            </linearGradient>
+                            <!-- Glow filter -->
+                            <filter id="morph-glow" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+                                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                            </filter>
+                            <!-- Gooey filter -->
+                            <filter id="gooey">
+                                <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+                                <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" result="goo"/>
+                                <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+                            </filter>
+                        </defs>
+                        <!-- Decorative lines to orbitals (drawn by JS) -->
+                        <g id="morph-lines" opacity="0.15"></g>
+                        <!-- Main morphing shape -->
+                        <g filter="url(#gooey)">
+                            <path id="morph-fill" class="morph-path-fill" fill="url(#morph-grad)" opacity="0.25" d=""/>
+                            <path id="morph-stroke" class="morph-path-stroke" stroke="url(#morph-grad)" filter="url(#morph-glow)" d=""/>
+                        </g>
+                        <!-- Orbital circles -->
+                        <g id="morph-orbitals"></g>
+                    </svg>
+                </div>
+
+                <div class="morph-timeline" id="morph-timeline"></div>
+
+                <div class="morph-description">
+                    <p>Organic shapes seamlessly dissolve into one another through path interpolation — each form defined by the same number of control points, enabling smooth mathematical transitions between radically different geometries.</p>
+                    <div style="margin-top:1rem">
+                        <span class="tech-tag">SVG Path</span>
+                        <span class="tech-tag">Morphing</span>
+                        <span class="tech-tag">SMIL</span>
+                        <span class="tech-tag">SVG Filters</span>
+                        <span class="tech-tag">Gooey Effect</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -1367,6 +1567,181 @@
             resize();
             resetParticles();
         }, { passive: true });
+    })();
+
+    /* ============================================
+       SECTION 4: Metamorphosis — SVG Morphing
+       ============================================ */
+    (function initMorphing() {
+        const fillPath = document.getElementById('morph-fill');
+        const strokePath = document.getElementById('morph-stroke');
+        const timeline = document.getElementById('morph-timeline');
+        const linesGroup = document.getElementById('morph-lines');
+        const orbitalsGroup = document.getElementById('morph-orbitals');
+        if (!fillPath) return;
+
+        // --- 5 shapes with equal point count (20 cubic bezier segments = 61 commands each) ---
+        // All paths centered at 250,250 in a 500x500 viewBox
+        const shapes = [
+            { name: 'Drop', path: 'M250,80 C280,80 340,140 360,200 C380,260 380,320 350,370 C320,420 290,440 250,440 C210,440 180,420 150,370 C120,320 120,260 140,200 C160,140 220,80 250,80 Z' },
+            { name: 'Star', path: 'M250,60 C260,130 310,150 370,140 C340,190 350,250 400,280 C340,290 300,330 310,400 C260,370 240,370 190,400 C200,330 160,290 100,280 C150,250 160,190 130,140 C190,150 240,130 250,60 Z' },
+            { name: 'Flower', path: 'M250,90 C290,130 330,100 350,120 C370,140 340,180 360,220 C380,260 420,260 420,290 C420,320 380,320 360,360 C340,400 360,420 330,430 C300,440 280,410 250,420 C220,410 200,440 170,430 C140,420 160,400 140,360 C120,320 80,320 80,290 C80,260 120,260 140,220 C160,180 130,140 150,120 C170,100 210,130 250,90 Z' },
+            { name: 'Wave', path: 'M100,250 C120,180 160,160 200,200 C240,240 240,300 280,300 C320,300 320,200 360,180 C400,160 430,200 440,250 C430,300 400,340 360,320 C320,300 320,240 280,220 C240,200 240,260 200,300 C160,340 120,320 100,250 Z' },
+            { name: 'Heart', path: 'M250,400 C220,370 140,330 110,280 C80,230 80,170 120,130 C160,90 200,90 230,120 C245,135 250,150 250,150 C250,150 255,135 270,120 C300,90 340,90 380,130 C420,170 420,230 390,280 C360,330 280,370 250,400 Z' }
+        ];
+
+        // --- Parse path to numeric arrays for interpolation ---
+        function parsePath(d) {
+            const nums = d.match(/-?\d+(\.\d+)?/g).map(Number);
+            return nums;
+        }
+
+        function buildPath(nums, template) {
+            let i = 0;
+            return template.replace(/-?\d+(\.\d+)?/g, () => nums[i++].toFixed(1));
+        }
+
+        // Normalize: all paths must have the same number of numeric values
+        const parsed = shapes.map(s => parsePath(s.path));
+        const template = shapes[0].path;
+
+        // Verify equal lengths, pad if needed
+        const targetLen = parsed[0].length;
+        parsed.forEach((p, idx) => {
+            while (p.length < targetLen) p.push(p[p.length - 1]);
+            if (p.length > targetLen) parsed[idx] = p.slice(0, targetLen);
+        });
+
+        // --- Interpolation ---
+        function lerpPaths(a, b, t) {
+            const out = new Array(a.length);
+            for (let i = 0; i < a.length; i++) {
+                out[i] = a[i] + (b[i] - a[i]) * t;
+            }
+            return out;
+        }
+
+        // --- Easing ---
+        function easeInOut(t) {
+            return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+        }
+
+        // --- Timeline UI ---
+        shapes.forEach((s, i) => {
+            if (i > 0) {
+                const conn = document.createElement('div');
+                conn.className = 'morph-tl-connector';
+                timeline.appendChild(conn);
+            }
+            const item = document.createElement('div');
+            item.className = 'morph-tl-item' + (i === 0 ? ' active' : '');
+            item.innerHTML = '<div class="morph-tl-dot"></div><span class="morph-tl-label">' + s.name + '</span>';
+            item.addEventListener('click', () => jumpTo(i));
+            timeline.appendChild(item);
+        });
+
+        const tlItems = timeline.querySelectorAll('.morph-tl-item');
+
+        // --- Orbital dots (8 in SVG) ---
+        const NUM_ORBITALS = 8;
+        for (let i = 0; i < NUM_ORBITALS; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', '4');
+            circle.setAttribute('fill', i % 2 === 0 ? '#00F0FF' : '#A855F7');
+            circle.setAttribute('opacity', '0.7');
+            circle.setAttribute('cx', '250');
+            circle.setAttribute('cy', '250');
+            orbitalsGroup.appendChild(circle);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', '250');
+            line.setAttribute('y1', '250');
+            line.setAttribute('x2', '250');
+            line.setAttribute('y2', '250');
+            line.setAttribute('stroke', i % 2 === 0 ? '#00F0FF' : '#A855F7');
+            line.setAttribute('stroke-width', '0.5');
+            line.setAttribute('opacity', '0.3');
+            linesGroup.appendChild(line);
+        }
+
+        const orbitalCircles = orbitalsGroup.querySelectorAll('circle');
+        const orbitalLines = linesGroup.querySelectorAll('line');
+
+        // --- Animation state ---
+        let currentShape = 0;
+        let morphProgress = 0;
+        const MORPH_DURATION = 3000; // ms per transition
+        let lastTime = 0;
+        let morphVisible = false;
+        let morphAnimId;
+        let manualJump = -1;
+
+        function jumpTo(idx) {
+            currentShape = idx;
+            morphProgress = 0;
+            manualJump = idx;
+            updateTimeline(idx);
+        }
+
+        function updateTimeline(idx) {
+            tlItems.forEach((item, i) => {
+                item.classList.toggle('active', i === idx);
+            });
+        }
+
+        function animateMorph(time) {
+            morphAnimId = requestAnimationFrame(animateMorph);
+            if (!morphVisible) return;
+
+            if (lastTime === 0) lastTime = time;
+            const dt = time - lastTime;
+            lastTime = time;
+
+            morphProgress += dt / MORPH_DURATION;
+
+            if (morphProgress >= 1) {
+                morphProgress = 0;
+                currentShape = (currentShape + 1) % shapes.length;
+                updateTimeline(currentShape);
+                // Re-trigger stroke drawing
+                strokePath.classList.remove('drawing');
+                void strokePath.offsetWidth;
+                strokePath.classList.add('drawing');
+            }
+
+            const nextShape = (currentShape + 1) % shapes.length;
+            const t = easeInOut(morphProgress);
+            const interpolated = lerpPaths(parsed[currentShape], parsed[nextShape], t);
+            const d = buildPath(interpolated, template);
+
+            fillPath.setAttribute('d', d);
+            strokePath.setAttribute('d', d);
+
+            // Update orbitals
+            const elapsed = time * 0.001;
+            for (let i = 0; i < NUM_ORBITALS; i++) {
+                const angle = (i / NUM_ORBITALS) * Math.PI * 2 + elapsed * 0.4;
+                const rx = 200 + Math.sin(elapsed * 0.3 + i) * 30;
+                const ry = 180 + Math.cos(elapsed * 0.2 + i) * 25;
+                const ox = 250 + Math.cos(angle) * rx;
+                const oy = 250 + Math.sin(angle) * ry;
+                orbitalCircles[i].setAttribute('cx', ox.toFixed(1));
+                orbitalCircles[i].setAttribute('cy', oy.toFixed(1));
+                orbitalLines[i].setAttribute('x2', ox.toFixed(1));
+                orbitalLines[i].setAttribute('y2', oy.toFixed(1));
+            }
+        }
+
+        // --- IntersectionObserver ---
+        const morphObs = new IntersectionObserver((entries) => {
+            morphVisible = entries[0].isIntersecting;
+            if (morphVisible && !strokePath.classList.contains('drawing')) {
+                strokePath.classList.add('drawing');
+            }
+        }, { threshold: 0.05 });
+        morphObs.observe(document.getElementById('metamorphosis'));
+
+        animateMorph(0);
     })();
 
     </script>
