@@ -250,10 +250,277 @@
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        /* ---- Placeholder for next sections ---- */
-        .next-placeholder {
-            height: 100vh;
+        /* ============================================
+           SECTION 2: Geometric Pulse — CSS Animation
+           ============================================ */
+        @property --conic-angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+        }
+
+        #geometric-pulse {
+            position: relative;
+            padding: 6rem 0 8rem;
+            min-height: 100vh;
+            overflow: hidden;
             background: var(--bg-secondary);
+        }
+
+        /* Animated conic-gradient lighthouse background */
+        #geometric-pulse::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 140%;
+            height: 140%;
+            transform: translate(-50%, -50%);
+            background: conic-gradient(
+                from var(--conic-angle),
+                transparent 0deg,
+                rgba(0, 240, 255, 0.03) 40deg,
+                transparent 80deg,
+                rgba(168, 85, 247, 0.03) 180deg,
+                transparent 220deg,
+                rgba(255, 45, 107, 0.02) 300deg,
+                transparent 360deg
+            );
+            animation: conic-spin 12s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes conic-spin {
+            to { --conic-angle: 360deg; }
+        }
+
+        .section-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ---- Section Header ---- */
+        .section-header {
+            margin-bottom: 4rem;
+        }
+
+        .section-number {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 4vw, 3.8rem);
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--text-primary);
+        }
+
+        .section-line {
+            display: block;
+            height: 1px;
+            margin-top: 1.2rem;
+            background: linear-gradient(90deg, var(--glow-cyan), var(--glow-purple), var(--glow-magenta));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .section-header.in-view .section-line {
+            transform: scaleX(1);
+        }
+
+        /* ---- Layout: Grid + Description ---- */
+        .geo-layout {
+            display: flex;
+            gap: 4rem;
+            align-items: flex-start;
+        }
+
+        .geo-description {
+            flex: 0 0 260px;
+            padding-top: 1rem;
+        }
+
+        .geo-description p {
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .geo-description .tech-tag {
+            display: inline-block;
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--glow-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 0.3em 0.7em;
+            border-radius: 2px;
+            margin: 0.2rem 0.3rem 0.2rem 0;
+        }
+
+        /* ---- Geometric Grid ---- */
+        .geo-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1.5rem;
+            perspective: 800px;
+        }
+
+        .geo-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            mix-blend-mode: screen;
+        }
+
+        .geo-shape {
+            width: 70px;
+            height: 70px;
+            position: relative;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        filter 0.4s ease;
+            will-change: transform;
+        }
+
+        .geo-cell:hover .geo-shape {
+            transform: scale(1.5) !important;
+            filter: brightness(1.8) drop-shadow(0 0 20px currentColor);
+        }
+
+        /* ---- Shape: Rotating Square ---- */
+        .shape-square {
+            background: var(--glow-cyan);
+            opacity: 0.7;
+            border-radius: 4px;
+            animation: spin-square 6s linear infinite;
+        }
+
+        @keyframes spin-square {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ---- Shape: Pulsing Circle ---- */
+        .shape-circle {
+            border-radius: 50%;
+            background: var(--glow-magenta);
+            opacity: 0.7;
+            animation: pulse-circle 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-circle {
+            0% { transform: scale(0.6); opacity: 0.4; }
+            100% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        /* ---- Shape: Morphing Triangle ---- */
+        .shape-triangle {
+            background: var(--glow-purple);
+            opacity: 0.7;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation: morph-tri 8s ease-in-out infinite;
+        }
+
+        @keyframes morph-tri {
+            0%, 100% { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+            25% { clip-path: polygon(50% 10%, 0% 50%, 100% 50%); }
+            50% { clip-path: polygon(25% 0%, 75% 0%, 50% 100%); }
+            75% { clip-path: polygon(0% 0%, 100% 0%, 100% 100%); }
+        }
+
+        /* ---- Shape: Counter-rotating Cross ---- */
+        .shape-cross {
+            width: 70px;
+            height: 70px;
+            position: relative;
+            opacity: 0.7;
+        }
+
+        .shape-cross::before,
+        .shape-cross::after {
+            content: '';
+            position: absolute;
+            background: var(--accent-emerald);
+            border-radius: 2px;
+        }
+
+        .shape-cross::before {
+            width: 100%;
+            height: 22%;
+            top: 39%;
+            left: 0;
+            animation: spin-cross-h 5s linear infinite;
+        }
+
+        .shape-cross::after {
+            width: 22%;
+            height: 100%;
+            left: 39%;
+            top: 0;
+            animation: spin-cross-v 5s linear infinite reverse;
+        }
+
+        @keyframes spin-cross-h {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes spin-cross-v {
+            to { transform: rotate(-360deg); }
+        }
+
+        /* ---- Shape: Diamond (bonus) ---- */
+        .shape-diamond {
+            background: var(--accent-amber);
+            opacity: 0.7;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            animation: spin-diamond 10s ease-in-out infinite;
+        }
+
+        @keyframes spin-diamond {
+            0%, 100% { transform: rotate(0deg) scale(0.8); }
+            50% { transform: rotate(180deg) scale(1.1); }
+        }
+
+        /* ---- Shape: Ring ---- */
+        .shape-ring {
+            border: 4px solid var(--glow-cyan);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: pulse-ring 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.5); border-width: 4px; opacity: 0.3; }
+            100% { transform: scale(1.15); border-width: 2px; opacity: 0.8; }
+        }
+
+        /* ---- Stagger delays via inline style ---- */
+        /* (set dynamically in HTML via style="animation-delay: Xs") */
+
+        /* ---- Glass hover backdrop ---- */
+        .geo-cell::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(0px);
+            opacity: 0;
+            transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
+            z-index: -1;
+        }
+
+        .geo-cell:hover::before {
+            opacity: 1;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.04);
         }
     </style>
 </head>
@@ -275,8 +542,34 @@
         </div>
     </section>
 
-    <!-- Placeholder so scroll indicator makes sense -->
-    <div class="next-placeholder"></div>
+    <!-- ============================================
+         SECTION 2: Geometric Pulse — CSS Animation
+         ============================================ -->
+    <section id="geometric-pulse">
+        <div class="section-container">
+            <header class="section-header" data-scroll-reveal>
+                <h2 class="section-number">01 — GEOMETRIC PULSE</h2>
+                <span class="section-line"></span>
+            </header>
+
+            <div class="geo-layout">
+                <aside class="geo-description">
+                    <p>Pure CSS animation — no JavaScript drives these shapes. Every rotation, pulse, and morph is achieved through @keyframes, clip-path transitions, and cubic-bezier timing functions.</p>
+                    <p>The staggered wave effect emerges from carefully offset animation-delay values across the grid, proving that CSS alone can create complex, organic motion.</p>
+                    <div style="margin-top:1.2rem">
+                        <span class="tech-tag">@keyframes</span>
+                        <span class="tech-tag">clip-path</span>
+                        <span class="tech-tag">mix-blend-mode</span>
+                        <span class="tech-tag">cubic-bezier</span>
+                        <span class="tech-tag">backdrop-filter</span>
+                        <span class="tech-tag">@property</span>
+                    </div>
+                </aside>
+
+                <div class="geo-grid" id="geo-grid"></div>
+            </div>
+        </div>
+    </section>
 
     <!-- ============================================
          Three.js via importmap (ES modules)
@@ -654,6 +947,55 @@
 
     // Start typewriter after a short delay
     setTimeout(typeNext, 1200);
+
+    /* ============================================
+       SECTION 2: Geometric Pulse — Grid Generator
+       ============================================ */
+    (function initGeometricPulse() {
+        const grid = document.getElementById('geo-grid');
+        if (!grid) return;
+
+        const COLS = 6;
+        const ROWS = 4;
+        const shapeTypes = ['square', 'circle', 'triangle', 'cross', 'diamond', 'ring'];
+
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                const i = row * COLS + col;
+                const cell = document.createElement('div');
+                cell.className = 'geo-cell';
+
+                const shape = document.createElement('div');
+                const type = shapeTypes[i % shapeTypes.length];
+                shape.className = `geo-shape shape-${type}`;
+
+                // Staggered wave delay based on diagonal distance
+                const delay = ((row + col) * 0.18).toFixed(2);
+                // Vary speed slightly per element
+                const speedMult = 0.8 + Math.random() * 0.6;
+                shape.style.animationDelay = `${delay}s`;
+                shape.style.animationDuration = `${(parseFloat(getComputedStyle(shape).animationDuration) || 5) * speedMult}s`;
+
+                cell.appendChild(shape);
+                grid.appendChild(cell);
+            }
+        }
+    })();
+
+    /* ============================================
+       Scroll Reveal Observer (shared across sections)
+       ============================================ */
+    const scrollRevealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('in-view');
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('[data-scroll-reveal]').forEach(el => {
+        scrollRevealObserver.observe(el);
+    });
 
     </script>
 </body>
